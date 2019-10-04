@@ -28,14 +28,14 @@ request:
 response:
 {
 	"id": 1,
-	"result": [null, "3e29d5", 5],
+	"result": [null, "00c904bd", 12],
 	"error": null
 }
 ```
 
 nonce1 is first part of the block header nonce (in hex).
 
-By protocol, CKB's nonce is 8 bytes long. The miner will pick nonce2 such that len(nonce2) = 8 - len(nonce1) = 8 - 3 = 5 bytes.
+Since v0.22.0-rc2, by protocol CKB's nonce is 16 bytes long. The miner will pick nonce2 such that len(nonce2) = 16 - len(nonce1) = 16 - 4 = 12 bytes.
 
 
 
@@ -48,8 +48,8 @@ By protocol, CKB's nonce is 8 bytes long. The miner will pick nonce2 such that l
 {
 	"id": 2,
 	"method": "mining.authorize",
-	"params": ["ckb1qyq2znu0gempdahctxsm49sa9jdzq9vnka7qt9ntff", "x"]
-} 
+	"params": ["ckb1qyq2znu0gempdahctxsm49sa9jdzq9vnka7qt9ntff.worker1", "x"]
+}
 
 {"id":2,"result":true,"error":null}
 ```
@@ -64,7 +64,7 @@ By protocol, CKB's nonce is 8 bytes long. The miner will pick nonce2 such that l
 {
 	"id": null,
 	"method": "mining.set_target",
-	"params": ["0020010000000000000000000000000000000000000000000000000000000000"]
+	"params": ["0001000000000000000000000000000000000000000000000000000000000000"]
 }
 ```
 
@@ -78,7 +78,7 @@ By protocol, CKB's nonce is 8 bytes long. The miner will pick nonce2 such that l
 {
 	"id": null,
 	"method": "mining.notify",
-	"params": ["17282f3f", "2860e9966c50829a76e650dc4abdf49c925d2fd116eab69cd7bc1ae6673225ef", 21728, "ebf5cca491c4760c1b4d9306e6aed35b17d773ab60650ed58974a84b2d0fb82c", true]
+	"params": ["1611", "d5a74fba920ad0d35ec5726f26327547cbc82180e356e5ccf6cf2e6bd75f8a66", 1, "df4f27b8a8baae4672012c7a57b3abd684e516b5a2739cfec71d8d071e85fe12", true]
 }
 ```
 
@@ -93,7 +93,7 @@ By protocol, CKB's nonce is 8 bytes long. The miner will pick nonce2 such that l
 {
 	"id": 102,
 	"method": "mining.submit",
-	"params": ["tmAfQj8jv7SMuCpzSkPMTR8v8AaKzQkJ7P2.worker1", "17282f3f", "eaf71970c0"]
+	"params": ["ckb1qyq2znu0gempdahctxsm49sa9jdzq9vnka7qt9ntff.worker1", "1611", "000000000000000000114026"]
 }
 
 {"id":102,"result":true,"error":null}    // accepted share response
@@ -105,13 +105,13 @@ nonce2 is the second part of the nonce.
 ```json
 In this example
 
-nonce = nonce1 + nonce2 = 3e29d5eaf71970c0
+nonce = nonce1 + nonce2 = 00c904bd000000000000000000114026 (16 bytes)
 
-headerHash = 2860e9966c50829a76e650dc4abdf49c925d2fd116eab69cd7bc1ae6673225ef   (32 bytes without nonce)
+headerHash = d5a74fba920ad0d35ec5726f26327547cbc82180e356e5ccf6cf2e6bd75f8a66   (32 bytes without nonce)
 
-headerHashWithNonce = nonce + headerHash = 3e29d5eaf71970c02860e9966c50829a76e650dc4abdf49c925d2fd116eab69cd7bc1ae6673225ef   (40 bytes with nonce)
+headerHashWithNonce = headerHash + nonce = d5a74fba920ad0d35ec5726f26327547cbc82180e356e5ccf6cf2e6bd75f8a6600c904bd000000000000000000114026   (48 bytes with nonce)
 
-powHash = eaglesonghash(headerHashWithNonce) = 0000dfd9214a52ee0860d988e66c1799847744ef43155b8e00c3f6e3948dbb93
+powHash = eaglesonghash(headerHashWithNonce) = 000034965758f32a266558876abba7be3ea343086bf048c9fc3c854e77a2f360
 ```
 
 
