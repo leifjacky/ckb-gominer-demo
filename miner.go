@@ -19,11 +19,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	BigOne   = new(big.Int).SetInt64(1)
+	MaxNonce = new(big.Int)
+)
+
 type StratumMiner struct {
 	cfg *StratumMinerConfig
 
 	target     *big.Int
-	nonce1     uint64
+	nonce1     string
 	nonce2Size int
 	job        atomic.Value
 	cnt        int64
@@ -36,14 +41,17 @@ type Job struct {
 	sync.Mutex
 	jobId   string
 	powHash string
-	nonce   uint64
+	nonce   *big.Int
 }
 
-func (j *Job) GetNextNonce(size int) uint64 {
+func (j *Job) GetNextNonce(size int) string {
 	j.Lock()
 	defer j.Unlock()
-	n := j.nonce & (1<<((uint(size)-1)*8) - 1)
-	j.nonce++
+	n := FillZeroHashLen(j.nonce.Text(10), size*2)
+	j.nonce = new(big.Int).Add(j.nonce, BigOne)
+	if j.nonce.Cmp(MaxNonce) >= 0 {
+		j.nonce = new(big.Int).Sub(j.nonce, MaxNonce)
+	}
 	return n
 }
 
@@ -158,7 +166,8 @@ func (m *StratumMiner) handleMesg(line []byte, flag int) error {
 				return fmt.Errorf("can't decode result: %v", err)
 			}
 			m.nonce2Size = int(result[2].(float64))
-			m.nonce1 = uint64(MustParseInt64(result[1].(string), 16) << (uint(m.nonce2Size) * 8))
+			MaxNonce = new(big.Int).Lsh(new(big.Int).SetInt64(1), uint(m.nonce2Size*8))
+			m.nonce1 = result[1].(string)
 		} else {
 			info := []interface{}{}
 			if err := json.Unmarshal(*mesg.Error, &info); err != nil {
@@ -212,7 +221,7 @@ func (m *StratumMiner) handleMesg(line []byte, flag int) error {
 		m.job.Store(&Job{
 			jobId:   jobId,
 			powHash: powHash,
-			nonce:   0,
+			nonce:   new(big.Int).SetInt64(0),
 		})
 	default:
 		result := false
@@ -289,9 +298,8 @@ func (m *StratumMiner) startWorker(i int) {
 		powhash := job.powHash
 		nonce2 := job.GetNextNonce(m.nonce2Size)
 		nonce := m.nonce1 + nonce2
-		pattern := fmt.Sprintf("%%0%dx", m.nonce2Size*2)
-		nonce2St := fmt.Sprintf(pattern, nonce2)
-		b := append(UInt64BEToBytes(nonce), MustStringToHexBytes(powhash)...)
+		nonce2St := nonce2
+		b := append(MustStringToHexBytes(powhash), MustStringToHexBytes(nonce)...)
 		hash := eaglesong.EaglesongHash(b)
 		bInt := Hash2BigTarget(hash)
 		if bInt.Cmp(m.target) <= 0 {

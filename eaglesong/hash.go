@@ -9,8 +9,8 @@ import "unsafe"
 
 func EaglesongHash(data []byte) []byte {
 	output := make([]byte, 32)
-	if len(data) >= 40 {
-		C.EaglesongHash((*C.uchar)(unsafe.Pointer(&output[0])), (*C.uchar)(unsafe.Pointer(&data[0])), C.int(40))
+	if len(data) >= 48 {
+		C.EaglesongHash((*C.uchar)(unsafe.Pointer(&output[0])), (*C.uchar)(unsafe.Pointer(&data[0])), C.int(48))
 	}
 	return output
 }

@@ -50,3 +50,10 @@ func GetReadableHashRateString(hashrate float64) string {
 
 	return fmt.Sprintf("%.3f %s", hr_float, units[i])
 }
+
+func FillZeroHashLen(hash string, l int) string {
+	for len(hash) < l {
+		hash = "0" + hash
+	}
+	return hash
+}
